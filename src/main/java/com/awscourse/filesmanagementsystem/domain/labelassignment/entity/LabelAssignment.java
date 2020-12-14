@@ -34,11 +34,11 @@ public class LabelAssignment extends AuditedObject {
     @EmbeddedId
     private Id id;
 
-    @MapsId(Label.ID_COLUMN_NAME)
+    @MapsId("labelId")
     @ManyToOne
     private Label label;
 
-    @MapsId(File.ID_COLUMN_NAME)
+    @MapsId("fileId")
     @ManyToOne
     private File file;
 
@@ -49,14 +49,12 @@ public class LabelAssignment extends AuditedObject {
     }
 
     @Embeddable
+    @Getter
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Id implements Serializable {
 
-        @Column(name = Label.ID_COLUMN_NAME)
         private Long labelId;
-
-        @Column(name = File.ID_COLUMN_NAME)
         private Long fileId;
 
         @Override

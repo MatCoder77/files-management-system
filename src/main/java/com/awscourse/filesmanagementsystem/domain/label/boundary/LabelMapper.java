@@ -3,7 +3,9 @@ package com.awscourse.filesmanagementsystem.domain.label.boundary;
 import com.awscourse.filesmanagementsystem.api.common.ResourceDTO;
 import com.awscourse.filesmanagementsystem.api.label.LabelDTO;
 import com.awscourse.filesmanagementsystem.api.label.LabelDetailsDTO;
+import com.awscourse.filesmanagementsystem.api.label.LabelSuggestionDTO;
 import com.awscourse.filesmanagementsystem.domain.label.entity.Label;
+import com.awscourse.filesmanagementsystem.domain.label.entity.LabelCalculationResult;
 import com.awscourse.filesmanagementsystem.domain.user.boundary.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -75,11 +77,27 @@ public class LabelMapper {
     }
 
     private URI getLabelUri(Label label) {
+        if (label == null) {
+            return null;
+        }
         return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path(LabelController.LABEL_RESOURCE)
                 .path(IDS_PATH)
                 .buildAndExpand(label.getId())
                 .toUri();
+    }
+
+    public List<LabelSuggestionDTO> mapToLabelSuggestionDTOs(Collection<LabelCalculationResult> labelCalculationResults) {
+        return labelCalculationResults.stream()
+                .map(this::mapToLabelSuggestionDTO)
+                .collect(Collectors.toList());
+    }
+
+    public LabelSuggestionDTO mapToLabelSuggestionDTO(LabelCalculationResult labelCalculationResult) {
+        if (labelCalculationResult == null) {
+            return null;
+        }
+        return new LabelSuggestionDTO(labelCalculationResult.getName(), labelCalculationResult.getConfidence());
     }
 
 }

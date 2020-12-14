@@ -4,6 +4,7 @@ package com.awscourse.filesmanagementsystem.infrastructure.configuration;
 import com.awscourse.filesmanagementsystem.domain.user.entity.User;
 import com.awscourse.filesmanagementsystem.domain.user.control.UserService;
 import com.awscourse.filesmanagementsystem.infrastructure.security.UserInfo;
+import com.awscourse.filesmanagementsystem.infrastructure.security.UserInfoProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,12 +32,8 @@ public class AuditingConfig {
 
         @Override
         public Optional<User> getCurrentAuditor() {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-                return Optional.empty();
-            }
-            UserInfo userInfo = (UserInfo) authentication.getPrincipal();
-            return Optional.ofNullable(userInfo.getId())
+            return UserInfoProvider.getAuthenticatedUser()
+                    .map(UserInfo::getId)
                     .map(userService::getExistingUser);
         }
     }

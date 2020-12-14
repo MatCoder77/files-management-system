@@ -39,10 +39,7 @@ import static com.awscourse.filesmanagementsystem.infrastructure.jpa.Persistence
 @NoArgsConstructor
 public class Label extends AuditedObject {
 
-    public static final String ID_COLUMN_NAME = "LABEL_ID";
-
     @Id
-    @Column(name = ID_COLUMN_NAME)
     @GeneratedValue(generator = ID_GENERATOR)
     private Long id;
 

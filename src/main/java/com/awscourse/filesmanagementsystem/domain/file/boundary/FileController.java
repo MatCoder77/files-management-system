@@ -5,6 +5,9 @@ import com.awscourse.filesmanagementsystem.api.file.FileInfoDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileUploadResponseDTO;
 import com.awscourse.filesmanagementsystem.domain.file.control.FileService;
 import com.awscourse.filesmanagementsystem.domain.file.entity.File;
+import com.awscourse.filesmanagementsystem.domain.file.entity.UploadInfo;
+import com.awscourse.filesmanagementsystem.domain.label.control.LabelCalculationService;
+import com.awscourse.filesmanagementsystem.domain.label.entity.LabelCalculationResult;
 import com.awscourse.filesmanagementsystem.infrastructure.security.UserInfo;
 import com.awscourse.filesmanagementsystem.infrastructure.security.annotation.LoggedUser;
 import io.swagger.annotations.Api;
@@ -12,6 +15,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -25,9 +29,13 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.net.URI;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.awscourse.filesmanagementsystem.domain.file.boundary.FileController.FILE_RESOURCE;
 import static com.awscourse.filesmanagementsystem.infrastructure.rest.ResourcePaths.ID;
@@ -45,6 +53,7 @@ public class FileController {
 
     private final FileMapper fileMapper;
     private final FileService fileService;
+    private final LabelCalculationService labelCalculationService;
 
     @ApiOperation(value = "${api.files.searchFiles.value}", notes = "${api.files.searchFiles.notes}")
     @GetMapping("/search")
@@ -98,9 +107,24 @@ public class FileController {
     }
 
     @ApiOperation(value = "${api.files.uploadFiles.value}", notes = "${api.files.uploadFiles.notes}")
-    @PostMapping(value = "/upload")
-    public List<FileUploadResponseDTO> uploadFiles(@RequestParam("files") MultipartFile[] files) {
-        return Collections.emptyList();
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<FileUploadResponseDTO>> uploadFiles(@RequestParam("files") MultipartFile[] files,
+                                                   @RequestParam(value = "path", defaultValue = "") String path,
+                                                   @RequestParam(value = "maxLabelsPerFile", defaultValue = "5") int maxLabelsPerFile,
+                                                   @RequestParam(value = "minConfidence", defaultValue = "80") float minConfidence) {
+        List<UploadInfo> uploadInfo = fileService.uploadFiles(Arrays.asList(files), path);
+        Map<URI, List<LabelCalculationResult>> suggestedLabelsByUri =
+                labelCalculationService.calculateLabelsForResources(getUrls(uploadInfo), maxLabelsPerFile, minConfidence);
+        List<FileUploadResponseDTO> fileUploadResponseDTOs =
+                fileMapper.mapToFileUploadResponseDTOs(uploadInfo, suggestedLabelsByUri);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(fileUploadResponseDTOs);
+    }
+
+    private List<URI> getUrls(Collection<UploadInfo> uploadInfo) {
+        return uploadInfo.stream()
+                .map(UploadInfo::getUrl)
+                .collect(Collectors.toList());
     }
 
 }

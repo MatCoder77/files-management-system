@@ -2,6 +2,7 @@ package com.awscourse.filesmanagementsystem.domain.file.control.storage;
 
 
 import java.io.File;
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -12,8 +13,8 @@ public interface StorageService {
 
     List<File> getResources(Collection<String> relativePaths);
 
-    String saveResource(File file, String relativePath);
+    void saveResource(File file, URI url);
 
-    String saveResources(Map<String, File> filesByRelativePath);
+    void saveResources(Map<URI, File> filesByUrl);
 
 }
