@@ -1,5 +1,7 @@
 package com.awscourse.filesmanagementsystem.domain.file.boundary;
 
+import com.awscourse.filesmanagementsystem.api.common.ResourceDTO;
+import com.awscourse.filesmanagementsystem.api.file.FileDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileDetailsDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileInfoDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileUploadResponseDTO;
@@ -7,14 +9,16 @@ import com.awscourse.filesmanagementsystem.domain.file.control.FileService;
 import com.awscourse.filesmanagementsystem.domain.file.entity.File;
 import com.awscourse.filesmanagementsystem.domain.file.entity.UploadInfo;
 import com.awscourse.filesmanagementsystem.domain.label.control.LabelCalculationService;
+import com.awscourse.filesmanagementsystem.domain.label.entity.Label;
 import com.awscourse.filesmanagementsystem.domain.label.entity.LabelCalculationResult;
 import com.awscourse.filesmanagementsystem.infrastructure.security.UserInfo;
 import com.awscourse.filesmanagementsystem.infrastructure.security.annotation.LoggedUser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +26,16 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -64,8 +69,8 @@ public class FileController {
     @ApiOperation(value = "${api.files.getFilesByIds.value}", notes = "${api.files.getFilesByIds.notes}")
     @GetMapping(IDS_PATH)
     public List<FileDetailsDTO> getFilesByIds(@PathVariable(IDS) Collection<Long> ids, @LoggedUser UserInfo userInfo) {
-        List<File> filesByIds = fileService.getFilesByIds(ids);
-        return null;
+        List<File> files = fileService.getFilesByIds(ids);
+        return fileMapper.mapToFileDetailsDTOs(files);
     }
 
     @ApiOperation(value = "${api.files.getFilesByDirectoryId.value}", notes = "${api.files.getFilesByDirectoryId.notes}")
@@ -74,18 +79,23 @@ public class FileController {
         return null;
     }
 
+    @ApiOperation(value = "${api.files.createFiles.value}", notes = "${api.files.createFiles.notes}")
+    @PostMapping
+    public List<ResourceDTO> createFiles(@Valid @RequestBody List<FileDTO> fileDTOs) {
+        List<File> files = fileMapper.mapToFile(fileDTOs);
+        List<File> createdFiles = fileService.createFiles(files);
+        //List<Label>
+        return Collections.emptyList();
+    }
+
     @ApiOperation(value = "${api.files.downloadFile.value}", notes = "${api.files.downloadFile.notes}")
     @GetMapping(value = "/download" + ID, produces = { MediaType.APPLICATION_OCTET_STREAM_VALUE })
-    public ResponseEntity<ByteArrayResource> downloadFile(@PathVariable(ID) Long id) {
-        return null;
-//        BucketObject file = simpleStorageService.getFile(bucketName, filename);
-//        ByteArrayResource resource = new ByteArrayResource(file.getContent());
-//        return ResponseEntity
-//                .ok()
-//                .contentLength(file.getContent().length)
-//                .header("Content-type", "application/octet-stream")
-//                .header("Content-disposition", "attachment; filename=\"" + file.getKey() + "\"")
-//                .body(resource);
+    public ResponseEntity<Resource> downloadFile(@PathVariable(ID) Long id, HttpServletRequest request) {
+        Resource resource = fileService.downloadResource(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
     }
 
     @ApiOperation(value = "${api.files.downloadZip.value}", notes = "${api.files.downloadZip.notes}")
@@ -112,7 +122,8 @@ public class FileController {
                                                    @RequestParam(value = "path", defaultValue = "") String path,
                                                    @RequestParam(value = "maxLabelsPerFile", defaultValue = "5") int maxLabelsPerFile,
                                                    @RequestParam(value = "minConfidence", defaultValue = "80") float minConfidence) {
-        List<UploadInfo> uploadInfo = fileService.uploadFiles(Arrays.asList(files), path);
+        List<Resource> resources = fileMapper.mapToResources(files);
+        List<UploadInfo> uploadInfo = fileService.uploadResources(resources, path);
         Map<URI, List<LabelCalculationResult>> suggestedLabelsByUri =
                 labelCalculationService.calculateLabelsForResources(getUrls(uploadInfo), maxLabelsPerFile, minConfidence);
         List<FileUploadResponseDTO> fileUploadResponseDTOs =

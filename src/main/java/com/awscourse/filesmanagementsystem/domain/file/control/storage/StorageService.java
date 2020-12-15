@@ -1,7 +1,8 @@
 package com.awscourse.filesmanagementsystem.domain.file.control.storage;
 
 
-import java.io.File;
+import org.springframework.core.io.Resource;
+
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -9,12 +10,12 @@ import java.util.Map;
 
 public interface StorageService {
 
-    File getResource(String relativePath);
+    Resource getResource(URI url);
 
-    List<File> getResources(Collection<String> relativePaths);
+    List<Resource> getResources(Collection<URI> url);
 
-    void saveResource(File file, URI url);
+    void saveResource(Resource resource, URI url);
 
-    void saveResources(Map<URI, File> filesByUrl);
+    void saveResources(Map<URI, Resource> resourcesByUrl);
 
 }

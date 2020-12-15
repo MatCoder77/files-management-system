@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -75,15 +76,16 @@ public class LabelService {
     }
 
     private void validateIfThereAreNoNameDuplicatesAmongExistingLabels(Collection<Label> labels) {
-        if (labelRepository.findAllByNameInAndIdNotIn(getNames(labels), getUniqueIds(labels)).size() != 0) {
-            throw new IllegalArgumentAppException("There are existing labels with given names!");
+        List<Label> foundDuplicates = labelRepository.findAllByNameInAndIdNotIn(getNames(labels), getUniqueIds(labels));
+        if (foundDuplicates.size() != 0) {
+            throw new IllegalArgumentAppException(MessageFormat.format("There are existing labels with given names {0}", getNames(foundDuplicates)));
         }
     }
 
     private List<Long> getUniqueIds(Collection<Label> labels) {
         return labels.stream()
-                .filter(this::hasLabelId)
                 .map(Label::getId)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -98,10 +100,6 @@ public class LabelService {
         validateIfAllLabelsExists(getUniqueIds(existingLabels), updatedLabels);
         validateNameUniqueness(updatedLabels);
         validatePermissions(existingLabels, userId);
-    }
-
-    private boolean hasLabelId(Label label) {
-        return label.getId() != null;
     }
 
     private void validateIfAllLabelsHaveUniqueId(Collection<Label> labels) {

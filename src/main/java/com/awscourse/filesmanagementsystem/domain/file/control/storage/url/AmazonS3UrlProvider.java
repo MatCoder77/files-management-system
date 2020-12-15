@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -23,11 +23,11 @@ public class AmazonS3UrlProvider implements UrlProvider{
     }
 
     @Override
-    public URI getUrlForResource(MultipartFile multipartFile, String relativePath) {
+    public URI getUrlForResource(Resource resource, String relativePath) {
         return UriComponentsBuilder.fromUriString(baseUrl)
                 .pathSegment(getUserPath())
                 .path(relativePath)
-                .pathSegment(getFileIdentifier(multipartFile))
+                .pathSegment(getFileIdentifier(resource))
                 .build()
                 .toUri();
     }
@@ -36,12 +36,12 @@ public class AmazonS3UrlProvider implements UrlProvider{
         return UserInfoProvider.requireAuthenticatedUser().getUsername();
     }
 
-    private String getFileIdentifier(MultipartFile multipartFile) {
-        return UUID.randomUUID().toString() + getExtensionFilenamePart(multipartFile);
+    private String getFileIdentifier(Resource resource) {
+        return UUID.randomUUID().toString() + getExtensionFilenamePart(resource);
     }
 
-    private String getExtensionFilenamePart(MultipartFile multipartFile) {
-        return Optional.ofNullable(FilenameUtils.getExtension(multipartFile.getOriginalFilename()))
+    private String getExtensionFilenamePart(Resource resource) {
+        return Optional.ofNullable(FilenameUtils.getExtension(resource.getFilename()))
                 .filter(StringUtils::isNoneEmpty)
                 .map(extension -> "." + extension)
                 .orElse("");

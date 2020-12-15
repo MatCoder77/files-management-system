@@ -1,6 +1,5 @@
 package com.awscourse.filesmanagementsystem.api.file;
 
-import com.awscourse.filesmanagementsystem.api.directory.DirectoryDTO;
 import com.awscourse.filesmanagementsystem.api.label.LabelDetailsDTO;
 import com.awscourse.filesmanagementsystem.api.user.UserDTO;
 import lombok.Builder;
@@ -15,8 +14,10 @@ public class FileDetailsDTO {
 
     private Long id;
     private String name;
+    private String path;
+    private String fullPath;
+    private String description;
     private Long size;
-    private DirectoryDTO directory;
     private List<LabelDetailsDTO> labels;
     private Instant createdAt;
     private Instant lastModifiedAt;
