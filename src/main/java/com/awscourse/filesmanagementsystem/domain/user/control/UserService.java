@@ -84,7 +84,7 @@ public class UserService {
     }
 
     private void publishUserCreatedEvent(User user) {
-        eventPublisher.publishEvent(new CreateEvent<>(user));
+        eventPublisher.publishEvent(new CreateEvent<>(this, user));
     }
 
     public String signInUser(String usernameOrEmail, String password) {
