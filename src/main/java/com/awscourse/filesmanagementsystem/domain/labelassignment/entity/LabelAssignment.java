@@ -6,27 +6,18 @@ import com.awscourse.filesmanagementsystem.domain.label.entity.Label;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Loader;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
 
-import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
-import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
 @Table(name = "label_assignment")
-@SQLDelete(sql = "UPDATE label_assignment SET object_state = 'REMOVED' WHERE id = ?")
-@Loader(namedQuery = "findLabelAssignmentById")
-@NamedQuery(name = "findLabelAssignmentById", query = "SELECT la FROM LabelAssignment la WHERE la.id = ?1 AND la.objectState = com.awscourse.filesmanagementsystem.domain.auditedobject.ObjectState.ACTIVE")
-@Where(clause = AuditedObject.IS_ACTIVE_OBJECT)
 @Getter
 @NoArgsConstructor
 public class LabelAssignment extends AuditedObject {
@@ -72,6 +63,21 @@ public class LabelAssignment extends AuditedObject {
             return Objects.hash(labelId, fileId);
         }
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LabelAssignment)) return false;
+
+        LabelAssignment that = (LabelAssignment) o;
+
+        return Objects.equals(getId(), that.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
     }
 
 }

@@ -2,7 +2,6 @@ package com.awscourse.filesmanagementsystem.domain.label.entity;
 
 import com.awscourse.filesmanagementsystem.domain.auditedobject.AuditedObject;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

@@ -1,7 +1,6 @@
 package com.awscourse.filesmanagementsystem.domain.file.control;
 
 import com.awscourse.filesmanagementsystem.domain.auditedobject.AuditedObject_;
-import com.awscourse.filesmanagementsystem.domain.directory.entity.Directory_;
 import com.awscourse.filesmanagementsystem.domain.file.boundary.FilesSearchCriteria;
 import com.awscourse.filesmanagementsystem.domain.file.entity.File;
 import com.awscourse.filesmanagementsystem.domain.file.entity.File_;
@@ -31,6 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SearchFileRepositoryImpl implements SearchFileRepository {
 
@@ -40,7 +40,8 @@ public class SearchFileRepositoryImpl implements SearchFileRepository {
     @Autowired
     private LabelRepository labelRepository;
 
-    private static final Set allowedSoringAttributes = Set.of(File_.NAME, File_.SIZE, File_.CREATED_AT, File_.UPDATED_AT);
+    private static final Set<String> allowedSoringAttributes =
+            Set.of(File_.NAME, File_.SIZE, AuditedObject_.CREATED_AT, AuditedObject_.UPDATED_AT);
 
     @Override
     public Page<File> searchFilesByCriteria(FilesSearchCriteria searchCriteria, Pageable pageable) {
@@ -66,7 +67,6 @@ public class SearchFileRepositoryImpl implements SearchFileRepository {
                                                            CriteriaBuilder cb, CriteriaQuery<File> criteriaQuery) {
         Path<String> name = root.get(File_.name);
         Path<Long> size = root.get(File_.size);
-        Path<Long> directory = root.get(File_.directory).get(Directory_.id);
         Path<Instant> createdAt = root.get(AuditedObject_.createdAt);
         Path<Instant> updatedAt = root.get(AuditedObject_.updatedAt);
         Path<String> createdBy = root.get(AuditedObject_.createdBy).get(User_.username);
@@ -108,7 +108,7 @@ public class SearchFileRepositoryImpl implements SearchFileRepository {
         Optional<Predicate> lessEqualPredicate = Optional.ofNullable(max)
                 .map(val -> criteriaBuilder.greaterThanOrEqualTo(attribute, val));
 
-        List<Predicate> predicates = Arrays.asList(greaterEqualPredicate, lessEqualPredicate).stream()
+        List<Predicate> predicates = Stream.of(greaterEqualPredicate, lessEqualPredicate)
                 .flatMap(Optional::stream)
                 .collect(Collectors.toList());
 

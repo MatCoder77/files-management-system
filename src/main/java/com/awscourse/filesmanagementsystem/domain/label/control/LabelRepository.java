@@ -6,7 +6,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @Repository
 public interface LabelRepository extends JpaRepository<Label, Long> {
@@ -14,6 +13,8 @@ public interface LabelRepository extends JpaRepository<Label, Long> {
     List<Label> findAllByCreatedById(Long id);
 
     List<Label> findAllByNameInAndIdNotIn(Collection<String> names, Collection<Long> ids);
+
+    List<Label> findAllByNameIn(Collection<String> names);
 
 }
 

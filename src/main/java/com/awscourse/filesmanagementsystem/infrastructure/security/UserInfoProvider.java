@@ -1,12 +1,14 @@
 package com.awscourse.filesmanagementsystem.infrastructure.security;
 
 import com.awscourse.filesmanagementsystem.infrastructure.exception.IllegalArgumentAppException;
+import lombok.experimental.UtilityClass;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
+@UtilityClass
 public class UserInfoProvider {
 
     public static UserInfo requireAuthenticatedUser() {

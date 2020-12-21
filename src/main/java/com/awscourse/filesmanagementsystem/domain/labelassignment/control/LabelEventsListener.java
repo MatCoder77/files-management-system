@@ -18,8 +18,8 @@ public class LabelEventsListener {
     private final LabelAssignmentService labelAssignmentService;
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
-    private void removeLabelAssignmentsForRemovedLabels(BulkDeleteEvent<Label> event) {
-        labelAssignmentService.removeLabelAssignmentsForLabels(getIds(event.getRelatedObjects()));
+    public void removeLabelAssignmentsForRemovedLabels(BulkDeleteEvent<Label> event) {
+        labelAssignmentService.deleteAllAssignmentsForLabels(getIds(event.getRelatedObjects()));
     }
 
     private List<Long> getIds(Collection<Label> labels) {

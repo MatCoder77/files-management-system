@@ -5,16 +5,19 @@ import com.awscourse.filesmanagementsystem.domain.file.boundary.FilesSearchCrite
 import com.awscourse.filesmanagementsystem.domain.file.control.storage.StorageService;
 import com.awscourse.filesmanagementsystem.domain.file.control.storage.url.UrlProvider;
 import com.awscourse.filesmanagementsystem.domain.file.entity.File;
+import com.awscourse.filesmanagementsystem.domain.file.entity.FileResource;
 import com.awscourse.filesmanagementsystem.domain.file.entity.UploadInfo;
-import com.awscourse.filesmanagementsystem.domain.label.control.LabelService;
 import com.awscourse.filesmanagementsystem.infrastructure.exception.ExceptionUtils;
 import com.awscourse.filesmanagementsystem.infrastructure.exception.IllegalArgumentAppException;
+import com.awscourse.filesmanagementsystem.infrastructure.transform.TransformUtils;
+import com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.net.URI;
@@ -25,19 +28,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
 @Service
 @Slf4j
+@Transactional
 @RequiredArgsConstructor
 public class FileService {
 
     private final FileRepository fileRepository;
     private final StorageService storageService;
     private final UrlProvider urlProvider;
-    private final LabelService labelService;
 
     public File getFileById(Long id) {
         return fileRepository.findById(id)
@@ -66,6 +70,7 @@ public class FileService {
 
     private void validateBeforeCreate(Map<File, Resource> resourcesByFile) {
         validateIfResourcesExist(resourcesByFile);
+        validateIfResourcesAreNotAlreadyAssociatedWithDifferentFile(resourcesByFile);
         validateIfFullPathsAreUnique(resourcesByFile.keySet());
     }
 
@@ -80,6 +85,21 @@ public class FileService {
         return resourcesByFile.entrySet().stream()
                 .filter(resourceByUrl -> !resourceByUrl.getValue().exists())
                 .collect(Collectors.toMap(fileByResource -> fileByResource.getKey().getUrl(), Map.Entry::getValue));
+    }
+
+    private void validateIfResourcesAreNotAlreadyAssociatedWithDifferentFile(Map<File, Resource> resourcesByFile) {
+        List<File> foundDuplicates = findDuplicatedUrlsAmongExistingFiles(resourcesByFile.keySet());
+        if (!foundDuplicates.isEmpty()) {
+            throw new IllegalArgumentAppException(MessageFormat.format("There are files already associated with supplied urls {0}", getNonNullUniqueIds(foundDuplicates)));
+        }
+    }
+
+    private List<File> findDuplicatedUrlsAmongExistingFiles(Collection<File> files) {
+        Set<Long> fileIds = getNonNullUniqueIds(files);
+        if (fileIds.isEmpty()) {
+            return fileRepository.findAllByUrlIn(getUrls(files));
+        }
+        return fileRepository.findAllByUrlInAndIdNotIn(getUrls(files), fileIds);
     }
 
     private void validateIfFullPathsAreUnique(Collection<File> files) {
@@ -101,17 +121,25 @@ public class FileService {
     }
 
     private void validateIfThereAreNoFullPathDuplicatesAmongExistingFiles(Collection<File> files) {
-        List<File> foundDuplicates = fileRepository.findAllByFullPathInAndIdNotIn(getFullPaths(files), getUniqueIds(files));
-        if (foundDuplicates.size() > 0) {
+        List<File> foundDuplicates = findDuplicatedFullPathsAmongExistingFiles(files);
+        if (!foundDuplicates.isEmpty()) {
             throw new IllegalArgumentAppException(MessageFormat.format("There are already existing files with full path {0}", getFullPaths(foundDuplicates)));
         }
     }
 
-    private List<Long> getUniqueIds(Collection<File> files) {
+    private List<File> findDuplicatedFullPathsAmongExistingFiles(Collection<File> files) {
+        Set<Long> fileIds = getNonNullUniqueIds(files);
+        if (fileIds.isEmpty()) {
+            return fileRepository.findAllByFullPathIn(getFullPaths(files));
+        }
+        return fileRepository.findAllByFullPathInAndIdNotIn(getFullPaths(files), fileIds);
+    }
+
+    private Set<Long> getNonNullUniqueIds(Collection<File> files) {
         return files.stream()
                 .map(File::getId)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     private void prepareBeforeCreate(Map<File, Resource> resourcesByFile) {
@@ -132,14 +160,72 @@ public class FileService {
         }
     }
 
-    public Resource downloadResource(Long fileId) {
-        File file = getFileById(fileId);
-        return storageService.getResource(file.getUrl());
+    public void updateFiles(Collection<File> updatedFiles, Long userId) {
+        List<File> foundFiles = fileRepository.findAllById(getNonNullUniqueIds(updatedFiles));
+        Map<File, Resource> resourcesByUpdatedFile = getResourcesByFile(updatedFiles);
+        validateBeforeUpdate(foundFiles, resourcesByUpdatedFile, userId);
+        prepareBeforeUpdate(resourcesByUpdatedFile);
+        updateFiles(foundFiles, updatedFiles);
     }
 
-    public List<Resource> downloadResources(Collection<Long> fileIds) {
+    public void validateBeforeUpdate(Collection<File> existingFiles, Map<File, Resource> resourceByUpdatedFile, Long userId) {
+        validateIfAllFilesHaveUniqueId(resourceByUpdatedFile.keySet());
+        validateIfAllFilesExist(getNonNullUniqueIds(existingFiles), resourceByUpdatedFile.keySet());
+        validateIfResourcesExist(resourceByUpdatedFile);
+        validateIfFullPathsAreUnique(resourceByUpdatedFile.keySet());
+    }
+
+    private void validateIfAllFilesHaveUniqueId(Collection<File> files) {
+        if (getNonNullUniqueIds(files).size() != files.size()) {
+            throw new IllegalArgumentAppException("There are some files without id or ids are not unique!");
+        }
+    }
+
+    public void validateIfAllFilesExist(Collection<Long> ids, Collection<File> foundFiles) {
+        Set<Long> idsOfNonExistingFiles = getIdsOfNonExistingFiles(ids, foundFiles);
+        if (!idsOfNonExistingFiles.isEmpty()) {
+            throw ExceptionUtils.getObjectNotFoundException(File.class, idsOfNonExistingFiles);
+        }
+    }
+
+    private Set<Long> getIdsOfNonExistingFiles(Collection<Long> ids, Collection<File> foundFiles) {
+        return Sets.difference(new HashSet<>(ids), getNonNullUniqueIds(foundFiles));
+    }
+
+    private void prepareBeforeUpdate(Map<File, Resource> resourcesByFile) {
+        resourcesByFile.forEach(this::prepareBeforeUpdate);
+    }
+
+    private void prepareBeforeUpdate(File file, Resource resource) {
+        file.setSize(getSize(resource));
+    }
+
+    private void updateFiles(Collection<File> existingFiles, Collection<File> updatedFiles) {
+        Map<Long, File> updatedFilesById = TransformUtils.transformToMap(updatedFiles, File::getId, Function.identity());
+        existingFiles.forEach(existingFile -> updateFile(existingFile, updatedFilesById.get(existingFile.getId())));
+    }
+
+    private void updateFile(File existingFile, File updatedFile) {
+        existingFile.setName(updatedFile.getName());
+        existingFile.setPath(updatedFile.getPath());
+        existingFile.setFullPath(updatedFile.getFullPath());
+        existingFile.setDescription(updatedFile.getDescription());
+        existingFile.setSize(updatedFile.getSize());
+        existingFile.setUrl(updatedFile.getUrl());
+    }
+
+    public FileResource downloadResource(Long fileId) {
+        File file = getFileById(fileId);
+        return new FileResource(file, storageService.getResource(file.getUrl()));
+    }
+
+    public List<FileResource> downloadResources(Collection<Long> fileIds) {
         List<File> files = getFilesByIds(fileIds);
-        return storageService.getResources(getUrls(files));
+        Map<URI, Resource> resourcesByUrl = storageService.getResources(getUrls(files));
+        Map<URI, File> fileByUrl = TransformUtils.transformToMap(files, File::getUrl, Function.identity());
+        return resourcesByUrl.entrySet().stream()
+                .map(urlAndResource -> new FileResource(fileByUrl.get(urlAndResource.getKey()), urlAndResource.getValue()))
+                .collect(Collectors.toList());
     }
 
     private List<URI> getUrls(Collection<File> files) {

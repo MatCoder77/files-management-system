@@ -1,6 +1,5 @@
 package com.awscourse.filesmanagementsystem.infrastructure.exception;
 
-import com.awscourse.filesmanagementsystem.infrastructure.exception.IllegalArgumentAppException;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 

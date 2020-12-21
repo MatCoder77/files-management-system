@@ -1,5 +1,6 @@
 package com.awscourse.filesmanagementsystem.domain.file.boundary;
 
+import com.awscourse.filesmanagementsystem.api.common.ResourceDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileDetailsDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileUploadResponseDTO;
@@ -12,15 +13,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.awscourse.filesmanagementsystem.infrastructure.rest.ResourcePaths.IDS_PATH;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,9 @@ public class FileMapper {
     }
 
     public FileDetailsDTO mapToFileDetailsDTO(File file) {
+        if (file == null) {
+            return null;
+        }
         return FileDetailsDTO.builder()
                 .id(file.getId())
                 .name(file.getName())
@@ -58,6 +64,9 @@ public class FileMapper {
     }
 
     public File mapToFile(FileDTO fileDTO) {
+        if (fileDTO == null) {
+            return null;
+        }
         return File.builder()
                 .id(fileDTO.getId())
                 .name(fileDTO.getName())
@@ -68,14 +77,40 @@ public class FileMapper {
                 .build();
     }
 
-    public String getFullPath(FileDTO fileDTO) {
+    private String getFullPath(FileDTO fileDTO) {
         return UriComponentsBuilder.fromUriString(fileDTO.getPath())
                 .pathSegment(fileDTO.getName())
-                .toString();
+                .build()
+                .getPath();
     }
 
-    public List<Resource> mapToResources(MultipartFile[] multipartFiles) {
-        return Arrays.stream(multipartFiles)
+    public List<ResourceDTO> mapToResourceDTOs(Collection<File> files) {
+        return files.stream()
+                .map(this::mapToResourceDTO)
+                .collect(Collectors.toList());
+    }
+
+    public ResourceDTO mapToResourceDTO(File file) {
+        if (file == null) {
+            return null;
+        }
+        return ResourceDTO.builder()
+                .id(file.getId())
+                .identifier(file.getFullPath())
+                .uri(getFileUri(file))
+                .build();
+    }
+
+    private URI getFileUri(File file) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path(FileController.FILE_RESOURCE)
+                .path(IDS_PATH)
+                .buildAndExpand(file.getId())
+                .toUri();
+    }
+
+    public List<Resource> mapToResources(List<MultipartFile> multipartFiles) {
+        return multipartFiles.stream()
                 .map(MultipartFile::getResource)
                 .collect(Collectors.toList());
     }

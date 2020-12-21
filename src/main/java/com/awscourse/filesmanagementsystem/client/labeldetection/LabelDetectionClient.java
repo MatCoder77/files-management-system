@@ -9,6 +9,6 @@ import java.util.Map;
 
 public interface LabelDetectionClient {
 
-    Map<URI, List<LabelCalculationResult>> detectLabels(Collection<URI> urls, int maxLabelsPerResource, float minConfidence);
+    Map<URI, List<LabelCalculationResult>> getDetectedLabelsByUrl(Collection<URI> urls, int maxLabelsPerResource, float minConfidence);
 
 }

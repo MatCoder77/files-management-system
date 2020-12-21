@@ -15,7 +15,7 @@ public final class CompletableFutures {
         return futures.stream()
                 .collect(Collectors.collectingAndThen(
                         Collectors.toList(),
-                        list -> CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).thenApply(__ -> list)))
+                        list -> CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).thenApply(unused -> list)))
                 .thenApply(list -> list.stream()
                         .map(CompletableFuture::join)
                         .collect(Collectors.toList()));
@@ -24,7 +24,7 @@ public final class CompletableFutures {
     public static <T> CompletableFuture<List<T>> allOfOrException(Collection<CompletableFuture<T>> futures) {
         CompletableFuture<List<T>> result = allOf(futures);
         for (CompletableFuture<?> f : futures) {
-            f.handle((__, ex) -> ex == null || result.completeExceptionally(ex));
+            f.handle((unused, ex) -> ex == null || result.completeExceptionally(ex));
         }
         return result;
     }

@@ -26,8 +26,6 @@ import java.util.List;
 
 import static com.awscourse.filesmanagementsystem.infrastructure.rest.ResourcePaths.IDS;
 import static com.awscourse.filesmanagementsystem.infrastructure.rest.ResourcePaths.IDS_PATH;
-import static com.awscourse.filesmanagementsystem.infrastructure.rest.ResourcePaths.ID_PATH;
-import static com.awscourse.filesmanagementsystem.infrastructure.rest.ResourcePaths.ID;
 
 @Api(tags = "Labels")
 @RestController

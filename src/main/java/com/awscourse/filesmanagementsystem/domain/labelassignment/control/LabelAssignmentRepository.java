@@ -12,4 +12,10 @@ public interface LabelAssignmentRepository extends JpaRepository<LabelAssignment
 
     List<LabelAssignment> findAllByLabelIdIn(Collection<Long> label);
 
+    List<LabelAssignment> findAllByFileIdIn(Collection<Long> fileIds);
+
+    void deleteAllByLabelIdIn(Collection<Long> labelIds);
+
+    void deleteAllByFileIdAndLabelIdIn(Long fileId, Collection<Long> labelIds);
+
 }

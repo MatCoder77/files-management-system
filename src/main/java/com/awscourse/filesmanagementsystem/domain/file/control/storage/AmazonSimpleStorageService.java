@@ -3,6 +3,7 @@ package com.awscourse.filesmanagementsystem.domain.file.control.storage;
 import com.amazonaws.services.s3.AmazonS3;
 import com.awscourse.filesmanagementsystem.infrastructure.asynchronous.CompletableFutures;
 import com.awscourse.filesmanagementsystem.infrastructure.exception.IllegalArgumentAppException;
+import com.awscourse.filesmanagementsystem.infrastructure.transform.TransformUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.aws.core.io.s3.PathMatchingSimpleStorageResourcePatternResolver;
@@ -14,13 +15,10 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -44,11 +42,15 @@ public class AmazonSimpleStorageService implements StorageService {
     }
 
     @Override
-    public List<Resource> getResources(Collection<URI> urls) {
-        List<CompletableFuture<Resource>> resourceFutures = urls.stream()
-                .map(url -> CompletableFuture.supplyAsync(() -> getResource(url), executor))
+    public Map<URI, Resource> getResources(Collection<URI> urls) {
+        List<CompletableFuture<AbstractMap.SimpleEntry<URI, Resource>>> resourceFutures = urls.stream()
+                .map(url -> CompletableFuture.supplyAsync(() -> getUrlAndResourceEntry(url, getResource(url)), executor))
                 .collect(Collectors.toList());
-        return CompletableFutures.allOf(resourceFutures).join();
+        return TransformUtils.transformToMap(CompletableFutures.allOf(resourceFutures).join(), Map.Entry::getKey, Map.Entry::getValue);
+    }
+
+    AbstractMap.SimpleEntry<URI, Resource> getUrlAndResourceEntry(URI url, Resource resource) {
+        return new AbstractMap.SimpleEntry<>(url, resource);
     }
 
     @Override

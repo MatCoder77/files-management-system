@@ -5,9 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.net.URI;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -26,8 +24,5 @@ public class FileDTO {
 
     @NotBlank
     private URI url;
-
-    @NotNull
-    private List<Long> labels;
 
 }

@@ -2,6 +2,7 @@ package com.awscourse.filesmanagementsystem.domain.label.control;
 
 import com.awscourse.filesmanagementsystem.domain.auditedobject.ObjectState;
 import com.awscourse.filesmanagementsystem.domain.label.entity.Label;
+import com.awscourse.filesmanagementsystem.infrastructure.transform.TransformUtils;
 import com.awscourse.filesmanagementsystem.infrastructure.event.crud.bulk.BulkDeleteEvent;
 import com.awscourse.filesmanagementsystem.infrastructure.exception.IllegalArgumentAppException;
 import com.awscourse.filesmanagementsystem.infrastructure.exception.ExceptionUtils;
@@ -70,60 +71,64 @@ public class LabelService {
     }
 
     private List<String> getNames(Collection<Label> labels) {
-        return labels.stream()
-                .map(Label::getName)
-                .collect(Collectors.toList());
+        return TransformUtils.transformToList(labels, Label::getName);
     }
 
     private void validateIfThereAreNoNameDuplicatesAmongExistingLabels(Collection<Label> labels) {
-        List<Label> foundDuplicates = labelRepository.findAllByNameInAndIdNotIn(getNames(labels), getUniqueIds(labels));
-        if (foundDuplicates.size() != 0) {
+        List<Label> foundDuplicates = findDuplicatedLabelsAmongExistingLabels(labels);
+        if (!foundDuplicates.isEmpty()) {
             throw new IllegalArgumentAppException(MessageFormat.format("There are existing labels with given names {0}", getNames(foundDuplicates)));
         }
     }
 
-    private List<Long> getUniqueIds(Collection<Label> labels) {
+    private List<Label> findDuplicatedLabelsAmongExistingLabels(Collection<Label> labels) {
+        Set<Long> labelIds = getNonNullUniqueIds(labels);
+        if (labelIds.isEmpty()) {
+            return labelRepository.findAllByNameIn(getNames(labels));
+        }
+        return labelRepository.findAllByNameInAndIdNotIn(getNames(labels), labelIds);
+    }
+
+    private Set<Long> getNonNullUniqueIds(Collection<Label> labels) {
         return labels.stream()
                 .map(Label::getId)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     public void updateLabels(Collection<Label> updatedLabels, Long userId) {
-        List<Label> foundLabels = labelRepository.findAllById(getUniqueIds(updatedLabels));
+        List<Label> foundLabels = labelRepository.findAllById(getNonNullUniqueIds(updatedLabels));
         validateBeforeUpdate(foundLabels, updatedLabels, userId);
         updateLabels(foundLabels, updatedLabels);
     }
 
     private void validateBeforeUpdate(Collection<Label> existingLabels, Collection<Label> updatedLabels, Long userId) {
         validateIfAllLabelsHaveUniqueId(updatedLabels);
-        validateIfAllLabelsExists(getUniqueIds(existingLabels), updatedLabels);
+        validateIfAllLabelsExists(getNonNullUniqueIds(existingLabels), updatedLabels);
         validateNameUniqueness(updatedLabels);
         validatePermissions(existingLabels, userId);
     }
 
     private void validateIfAllLabelsHaveUniqueId(Collection<Label> labels) {
-        if (getUniqueIds(labels).size() != labels.size()) {
+        if (getNonNullUniqueIds(labels).size() != labels.size()) {
             throw new IllegalArgumentAppException("There are some labels without id or ids are not unique!");
         }
     }
 
-    private void validateIfAllLabelsExists(Collection<Long> idsOfLabelsToRemove, Collection<Label> foundLabels) {
-        Set<Long> idsOfNonExistingMovies = getIdsOfNonExistingLabels(idsOfLabelsToRemove, foundLabels);
+    public void validateIfAllLabelsExists(Collection<Long> ids, Collection<Label> foundLabels) {
+        Set<Long> idsOfNonExistingMovies = getIdsOfNonExistingLabels(ids, foundLabels);
         if (!idsOfNonExistingMovies.isEmpty()) {
             throw ExceptionUtils.getObjectNotFoundException(Label.class, idsOfNonExistingMovies);
         }
     }
 
     private Set<Long> getIdsOfNonExistingLabels(Collection<Long> idsOfLabelsToRemove, Collection<Label> foundLabels) {
-        return foundLabels.stream()
-                .map(Label::getId)
-                .collect(Collectors.collectingAndThen(Collectors.toSet(), foundIds -> Sets.difference(new HashSet<>(idsOfLabelsToRemove), foundIds)));
+        return Sets.difference(new HashSet<>(idsOfLabelsToRemove), getNonNullUniqueIds(foundLabels));
     }
 
     private void validatePermissions(Collection<Label> labels, Long userId) {
         List<Long> labelsWithoutPermissions = getLabelsWithoutPermissions(labels, userId);
-        if (labelsWithoutPermissions.size() != 0) {
+        if (!labelsWithoutPermissions.isEmpty()) {
             throw new IllegalArgumentAppException(MessageFormat.format("No permissions for delete labels {0}", StringUtils.join(labelsWithoutPermissions)));
         }
     }

@@ -54,8 +54,8 @@ public class File extends AuditedObject {
     @NotBlank
     private String path;
 
-    @NaturalId
     @NotBlank
+    @NaturalId(mutable = true)
     private String fullPath;
 
     @Column(length = 2500)
@@ -64,7 +64,7 @@ public class File extends AuditedObject {
     @NotNull
     private long size;
 
-    @NotBlank
+    @NotNull
     @Column(length = 1000, unique = true)
     private URI url;
 

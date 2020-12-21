@@ -1,15 +1,12 @@
 package com.awscourse.filesmanagementsystem.infrastructure.event.crud.single;
 
 import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
 
 @Getter
-public class DeleteEvent<T> extends ApplicationEvent {
+public class DeleteEvent<T> extends AbstractEvent<T> {
 
-    private final T deletedObject;
-
-    public DeleteEvent(Object source, T deletedObject) {
-        super(source);
-        this.deletedObject = deletedObject;
+    public DeleteEvent(Object source, T affectedObject) {
+        super(source, affectedObject);
     }
+
 }
