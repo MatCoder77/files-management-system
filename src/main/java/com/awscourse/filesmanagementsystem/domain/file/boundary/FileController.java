@@ -4,8 +4,8 @@ import com.awscourse.filesmanagementsystem.api.common.ResourceDTO;
 import com.awscourse.filesmanagementsystem.api.common.ResponseDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileDetailsDTO;
-import com.awscourse.filesmanagementsystem.api.file.FileInfoDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileUploadResponseDTO;
+import com.awscourse.filesmanagementsystem.api.file.FilesSearchResultDTO;
 import com.awscourse.filesmanagementsystem.api.label.LabelAssignmentDTO;
 import com.awscourse.filesmanagementsystem.domain.file.control.FileService;
 import com.awscourse.filesmanagementsystem.domain.file.entity.File;
@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -74,8 +75,9 @@ public class FileController {
 
     @ApiOperation(value = "${api.files.searchFiles.value}", notes = "${api.files.searchFiles.notes}")
     @GetMapping("/search")
-    public List<FileInfoDTO> searchFiles(@Valid FilesSearchCriteria searchCriteria, @Valid  Pageable pageable) {
-        return Collections.emptyList();
+    public FilesSearchResultDTO searchFiles(@Valid FilesSearchCriteria searchCriteria, @Valid  Pageable pageable) {
+        Page<File> filePage = fileService.searchFilesByCriteria(searchCriteria, pageable);
+        return fileMapper.mapToFilesSearchResultDTO(filePage);
     }
 
     @ApiOperation(value = "${api.files.getFilesByIds.value}", notes = "${api.files.getFilesByIds.notes}")

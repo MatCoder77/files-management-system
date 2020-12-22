@@ -13,19 +13,19 @@ import java.util.Objects;
 
 public class UserInfo implements UserDetails {
 
-    private Long id;
+    private final Long id;
 
-    private String name;
+    private final String name;
 
-    private String username;
-
-    @JsonIgnore
-    private String email;
+    private final String username;
 
     @JsonIgnore
-    private String password;
+    private final String email;
 
-    private GrantedAuthority userRole;
+    @JsonIgnore
+    private final String password;
+
+    private final GrantedAuthority userRole;
 
     public UserInfo(Long id, String name, String username, String email, String password, GrantedAuthority userRole) {
         this.id = id;

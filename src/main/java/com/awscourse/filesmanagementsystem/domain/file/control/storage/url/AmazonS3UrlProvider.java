@@ -17,7 +17,7 @@ import java.util.UUID;
 @Component
 public class AmazonS3UrlProvider implements UrlProvider{
 
-    private String baseUrl;
+    private final String baseUrl;
     public AmazonS3UrlProvider(@Value("${app.storage}") String baseUrl) {
         this.baseUrl = baseUrl;
     }

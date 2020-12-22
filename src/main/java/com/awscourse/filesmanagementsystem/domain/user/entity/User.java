@@ -83,14 +83,12 @@ public class User extends AuditedObject {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    public User setPassword(String password) {
+    public void setPassword(String password) {
         this.password = password;
-        return this;
     }
 
-    public User setRole(UserRole role) {
+    public void setRole(UserRole role) {
         this.role = role;
-        return this;
     }
 
     @Override

@@ -60,10 +60,10 @@ public class AmazonSimpleStorageService implements StorageService {
 
     @Override
     public void saveResources(Map<URI, Resource> resourcesByUrl) {
-        List<CompletableFuture<Void>> uploadFutures = resourcesByUrl.entrySet().stream()
+        CompletableFuture<Void>[] uploadFutures = resourcesByUrl.entrySet().stream()
                 .map(fileByPath -> CompletableFuture.runAsync(() -> saveResource(fileByPath.getValue(), fileByPath.getKey()), executor))
-                .collect(Collectors.toList());
-        CompletableFuture.allOf(uploadFutures.toArray(new CompletableFuture[0])).join();
+                .toArray(CompletableFuture[]::new);
+        CompletableFuture.allOf(uploadFutures).join();
     }
 
     @Override

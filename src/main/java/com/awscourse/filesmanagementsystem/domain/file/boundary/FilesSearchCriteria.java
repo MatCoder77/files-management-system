@@ -11,7 +11,8 @@ import java.util.List;
 public class FilesSearchCriteria {
 
     private String name;
-    private List<String> labels;
+    private List<String> containsAnyOfLabels;
+    private List<String> containsAllOfLabels;
     private Long minSize;
     private Long maxSize;
     private String path;

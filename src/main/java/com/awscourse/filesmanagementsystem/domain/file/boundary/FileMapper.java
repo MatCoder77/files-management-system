@@ -4,6 +4,7 @@ import com.awscourse.filesmanagementsystem.api.common.ResourceDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileDetailsDTO;
 import com.awscourse.filesmanagementsystem.api.file.FileUploadResponseDTO;
+import com.awscourse.filesmanagementsystem.api.file.FilesSearchResultDTO;
 import com.awscourse.filesmanagementsystem.domain.file.entity.File;
 import com.awscourse.filesmanagementsystem.domain.file.entity.UploadInfo;
 import com.awscourse.filesmanagementsystem.domain.label.boundary.LabelMapper;
@@ -11,6 +12,7 @@ import com.awscourse.filesmanagementsystem.domain.label.entity.LabelCalculationR
 import com.awscourse.filesmanagementsystem.domain.user.boundary.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -31,6 +33,15 @@ public class FileMapper {
 
     private final LabelMapper labelMapper;
     private final UserMapper userMapper;
+
+    public FilesSearchResultDTO mapToFilesSearchResultDTO(Page<File> filePage) {
+        return FilesSearchResultDTO.builder()
+                .results(mapToFileDetailsDTOs(filePage.getContent()))
+                .totalSize(filePage.getTotalElements())
+                .pageSize(filePage.getSize())
+                .pageNumber(filePage.getNumber())
+                .build();
+    }
 
     public List<FileDetailsDTO> mapToFileDetailsDTOs(Collection<File> files) {
         return files.stream()
