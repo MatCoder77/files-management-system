@@ -87,12 +87,6 @@ public class FileController {
         return fileMapper.mapToFileDetailsDTOs(files);
     }
 
-    @ApiOperation(value = "${api.files.getFilesByDirectoryId.value}", notes = "${api.files.getFilesByDirectoryId.notes}")
-    @GetMapping("/directory" + ID_PATH)
-    public List<FileDetailsDTO> getFilesByDirectoryId(@PathVariable(ID) Long id) {
-        return Collections.emptyList();
-    }
-
     @ApiOperation(value = "${api.files.createFiles.value}", notes = "${api.files.createFiles.notes}")
     @PostMapping
     public List<ResourceDTO> createFiles(@Valid @RequestBody List<FileDTO> fileDTOs) {
@@ -125,6 +119,13 @@ public class FileController {
         List<File> filesToUpdate = fileMapper.mapToFile(fileDTOs);
         fileService.updateFiles(filesToUpdate, userInfo.getId());
         return fileMapper.mapToResourceDTOs(filesToUpdate);
+    }
+
+    @ApiOperation(value = "${api.files.deleteFiles.value}", notes = "${api.files.deleteFiles.notes}")
+    @DeleteMapping(IDS_PATH)
+    public ResponseDTO<Boolean> deleteFiles(@PathVariable(IDS) List<Long> ids) {
+        fileService.deleteFiles(ids);
+        return new ResponseDTO<>(true, "Files deleted successfully");
     }
 
     @ApiOperation(value = "${api.files.downloadFile.value}", notes = "${api.files.downloadFile.notes}")

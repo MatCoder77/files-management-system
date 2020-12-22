@@ -108,4 +108,8 @@ public class LabelAssignmentService {
         labelAssignmentRepository.deleteAllByLabelIdIn(labelIds);
     }
 
+    public void deleteAllAssignmentsForFile(Collection<Long> fileIds) {
+        labelAssignmentRepository.deleteAllByFileIdIn(fileIds);
+    }
+
 }

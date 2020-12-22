@@ -1,6 +1,7 @@
 package com.awscourse.filesmanagementsystem.domain.file.control;
 
 import com.awscourse.filesmanagementsystem.domain.auditedobject.ObjectState;
+import com.awscourse.filesmanagementsystem.domain.file.boundary.FileBulkDeletedEvent;
 import com.awscourse.filesmanagementsystem.domain.file.boundary.FilesSearchCriteria;
 import com.awscourse.filesmanagementsystem.domain.file.control.storage.StorageService;
 import com.awscourse.filesmanagementsystem.domain.file.control.storage.url.UrlProvider;
@@ -13,6 +14,7 @@ import com.awscourse.filesmanagementsystem.infrastructure.transform.TransformUti
 import com.google.common.collect.Sets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +44,7 @@ public class FileService {
     private final FileRepository fileRepository;
     private final StorageService storageService;
     private final UrlProvider urlProvider;
+    private final ApplicationEventPublisher eventPublisher;
 
     public File getFileById(Long id) {
         return fileRepository.findById(id)
@@ -212,6 +215,21 @@ public class FileService {
         existingFile.setDescription(updatedFile.getDescription());
         existingFile.setSize(updatedFile.getSize());
         existingFile.setUrl(updatedFile.getUrl());
+    }
+
+    public void deleteFiles(Collection<Long> ids) {
+        List<File> foundFiles = fileRepository.findAllById(ids);
+        validateBeforeDelete(ids, foundFiles);
+        foundFiles.forEach(file -> file.setObjectState(ObjectState.REMOVED));
+        publishFileBulkDeletedEvent(foundFiles);
+    }
+
+    private void validateBeforeDelete(Collection<Long> ids, Collection<File> files) {
+        validateIfAllFilesExist(ids, files);
+    }
+
+    private void publishFileBulkDeletedEvent(List<File> deletedFiles) {
+        eventPublisher.publishEvent(new FileBulkDeletedEvent(this, deletedFiles));
     }
 
     public FileResource downloadResource(Long fileId) {

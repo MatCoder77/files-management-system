@@ -1,9 +1,9 @@
 package com.awscourse.filesmanagementsystem.domain.label.control;
 
 import com.awscourse.filesmanagementsystem.domain.auditedobject.ObjectState;
+import com.awscourse.filesmanagementsystem.domain.label.boundary.LabelBulkDeletedEvent;
 import com.awscourse.filesmanagementsystem.domain.label.entity.Label;
 import com.awscourse.filesmanagementsystem.infrastructure.transform.TransformUtils;
-import com.awscourse.filesmanagementsystem.infrastructure.event.crud.bulk.BulkDeleteEvent;
 import com.awscourse.filesmanagementsystem.infrastructure.exception.IllegalArgumentAppException;
 import com.awscourse.filesmanagementsystem.infrastructure.exception.ExceptionUtils;
 import com.google.common.collect.Sets;
@@ -173,7 +173,7 @@ public class LabelService {
     }
 
     private void publishLabelBulkDeletedEvent(List<Label> removedLabels) {
-        eventPublisher.publishEvent(new BulkDeleteEvent<>(this, removedLabels));
+        eventPublisher.publishEvent(new LabelBulkDeletedEvent(this, removedLabels));
     }
 
 }

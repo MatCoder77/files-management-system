@@ -18,4 +18,6 @@ public interface LabelAssignmentRepository extends JpaRepository<LabelAssignment
 
     void deleteAllByFileIdAndLabelIdIn(Long fileId, Collection<Long> labelIds);
 
+    void deleteAllByFileIdIn(Collection<Long> fileId);
+
 }
