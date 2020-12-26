@@ -116,9 +116,9 @@ public class LabelService {
     }
 
     public void validateIfAllLabelsExists(Collection<Long> ids, Collection<Label> foundLabels) {
-        Set<Long> idsOfNonExistingMovies = getIdsOfNonExistingLabels(ids, foundLabels);
-        if (!idsOfNonExistingMovies.isEmpty()) {
-            throw ExceptionUtils.getObjectNotFoundException(Label.class, idsOfNonExistingMovies);
+        Set<Long> idsOfNonExistingEducationalEffects = getIdsOfNonExistingLabels(ids, foundLabels);
+        if (!idsOfNonExistingEducationalEffects.isEmpty()) {
+            throw ExceptionUtils.getObjectNotFoundException(Label.class, idsOfNonExistingEducationalEffects);
         }
     }
 
@@ -129,7 +129,7 @@ public class LabelService {
     private void validatePermissions(Collection<Label> labels, Long userId) {
         List<Long> labelsWithoutPermissions = getLabelsWithoutPermissions(labels, userId);
         if (!labelsWithoutPermissions.isEmpty()) {
-            throw new IllegalArgumentAppException(MessageFormat.format("No permissions for delete labels {0}", StringUtils.join(labelsWithoutPermissions)));
+            throw new IllegalArgumentAppException(MessageFormat.format("No permissions to perform operations for labels {0}", StringUtils.join(labelsWithoutPermissions)));
         }
     }
 
