@@ -104,7 +104,7 @@ public class LabelService {
 
     private void validateBeforeUpdate(Collection<Label> existingLabels, Collection<Label> updatedLabels, Long userId) {
         validateIfAllLabelsHaveUniqueId(updatedLabels);
-        validateIfAllLabelsExists(getNonNullUniqueIds(existingLabels), updatedLabels);
+        validateIfAllLabelsExists(getNonNullUniqueIds(updatedLabels), existingLabels);
         validateNameUniqueness(updatedLabels);
         validatePermissions(existingLabels, userId);
     }
