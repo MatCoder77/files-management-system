@@ -173,7 +173,7 @@ public class FileService {
 
     public void validateBeforeUpdate(Collection<File> existingFiles, Map<File, Resource> resourceByUpdatedFile, Long userId) {
         validateIfAllFilesHaveUniqueId(resourceByUpdatedFile.keySet());
-        validateIfAllFilesExist(getNonNullUniqueIds(existingFiles), resourceByUpdatedFile.keySet());
+        validateIfAllFilesExist(getNonNullUniqueIds(resourceByUpdatedFile.keySet()), existingFiles);
         validateIfResourcesExist(resourceByUpdatedFile);
         validateIfFullPathsAreUnique(resourceByUpdatedFile.keySet());
     }

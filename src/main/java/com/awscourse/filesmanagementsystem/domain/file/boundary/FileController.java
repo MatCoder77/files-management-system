@@ -75,7 +75,7 @@ public class FileController {
 
     @ApiOperation(value = "${api.files.searchFiles.value}", notes = "${api.files.searchFiles.notes}")
     @GetMapping("/search")
-    public FilesSearchResultDTO searchFiles(@Valid FilesSearchCriteria searchCriteria, @Valid  Pageable pageable) {
+    public FilesSearchResultDTO searchFiles(@Valid FilesSearchCriteria searchCriteria, @Valid Pageable pageable) {
         Page<File> filePage = fileService.searchFilesByCriteria(searchCriteria, pageable);
         return fileMapper.mapToFilesSearchResultDTO(filePage);
     }
