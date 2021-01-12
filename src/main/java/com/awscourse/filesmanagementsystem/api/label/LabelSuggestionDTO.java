@@ -8,8 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LabelSuggestionDTO {
-    
+
     private String name;
+    private Long existingLabelId;
     private float confidence;
     
 }

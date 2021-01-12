@@ -176,4 +176,8 @@ public class LabelService {
         eventPublisher.publishEvent(new LabelBulkDeletedEvent(this, removedLabels));
     }
 
+    public List<Label> getLabelsByNames(Collection<String> names) {
+        return labelRepository.findAllByNameIn(names);
+    }
+
 }
